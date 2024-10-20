@@ -3,7 +3,9 @@ This script create the FCPXML file and adds default configuration to it.
 """
 from lxml import etree
 import argparse
+
 from concatenate import Concatenate
+from preprocess_videos import PreprocessVideos
 
 def create_fcpxml():
     """
@@ -32,6 +34,7 @@ if __name__ == '__main__':
     # Get arguments
     parser = argparse.ArgumentParser(description='Create FCPXML file.')
     parser.add_argument('videos_folder', type=str, help='Folder with the video files.')
+    parser.add_argument('--skip-preprocess', '-sp', action='store_true', help='Skip the preprocessing step')
 
     # Parse the arguments
     args = parser.parse_args()
@@ -39,8 +42,13 @@ if __name__ == '__main__':
     # Create the FCPXML Element object
     fcpxml = create_fcpxml()
 
+    # Preprocess videos
+    preprocess = PreprocessVideos(args.videos_folder)
+    if not args.skip_preprocess:
+        preprocess.preprocess_all_videos_in_folder()
+
     # Concatenate files
-    concatenate = Concatenate(fcpxml, args.videos_folder)
+    concatenate = Concatenate(fcpxml, preprocess.preprocessed_folder)
     concatenate.concatenate_video_files()
 
     # Remove silent parts
@@ -61,6 +69,5 @@ if __name__ == '__main__':
 
         # Add FCPXML tree to the file
         tree.write(file, encoding='UTF-8', pretty_print=True)
-
 
     print("FCPXML file created successfully.")
