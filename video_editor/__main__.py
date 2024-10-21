@@ -37,7 +37,7 @@ def main():
     remove_silence.remove_silence_from_videos()
 
     # Add subtitles
-
+    remove_silence.generate_final_preview_video()
 
     # Create the FCPXML file
     timeline.generate_fcpxml_file()
