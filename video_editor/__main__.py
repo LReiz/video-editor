@@ -6,6 +6,7 @@ import argparse
 
 from features.concatenate import Concatenate
 from features.preprocess_videos import PreprocessVideos
+from features.remove_silence import RemoveSilence
 from entities.timeline import Timeline
 
 def create_fcpxml():
@@ -56,6 +57,8 @@ def main():
     concatenate.concatenate_video_files()
 
     # Remove silent parts
+    remove_silence = RemoveSilence(timeline, preprocess.preprocessed_folder)
+    remove_silence.remove_silence_from_videos()
 
 
     # Add subtitles
