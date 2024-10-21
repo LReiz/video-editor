@@ -8,8 +8,8 @@ import ffmpeg
 
 
 class Concatenate:
-    def __init__(self, fcpxml, videos_folder):
-        self.fcpxml = fcpxml
+    def __init__(self, timeline, videos_folder):
+        self.timeline = timeline
         self.videos_folder = videos_folder
         self.total_frames = 0
         self.fps = 0
@@ -79,15 +79,17 @@ class Concatenate:
             for the same videos. We need to find a better way to calculate the duration. Although, it doesn't
             seem to visually affect the final video.
         """
-        asset_element.set('duration', f"{num_frames}/{fps}s")
-        asset_element.set('hasVideo', '1')
-        asset_element.set('id', f"r{self.resource_id}")
-        asset_element.set('audioSources', '1')  # Placeholder for audio sources
-        asset_element.set('hasAudio', '1' if audio_channels > 0 else '0')
-        asset_element.set('start', '0/1s')  # Placeholder start
-        asset_element.set('name', filename)
-        asset_element.set('audioChannels', str(audio_channels))
-        asset_element.set('format', f"r0")
+        asset_element.attrib.update({
+            'duration': f"{num_frames}/{fps}s",
+            'hasVideo': '1',
+            'id': f"r{self.resource_id}",
+            'audioSources': '1',  # Placeholder for audio sources
+            'hasAudio': '1' if audio_channels > 0 else '0',
+            'start': '0/1s',  # Placeholder start
+            'name': filename,
+            'audioChannels': str(audio_channels),
+            'format': "r0",
+        })
 
         self.total_frames += num_frames
 
@@ -130,12 +132,17 @@ class Concatenate:
         """
         Add resource to the FCPXML object.
         """
+        # Ignore if video_path is not a file
+        if not os.path.isfile(video_path):
+            print(f"Not a file. Ignoring: {video_path}")
+            return
+        
         self.store_video_data(video_path, index+1)
 
         # Create the resources element if it doesn't exist
-        resources = self.fcpxml.find('resources')
+        resources = self.timeline.fcpxml.find('resources')
         if resources is None:
-            resources = etree.SubElement(self.fcpxml, 'resources')
+            resources = etree.SubElement(self.timeline.fcpxml, 'resources')
 
         # Get format element
         format_element = resources.find('format')
@@ -163,21 +170,28 @@ class Concatenate:
 
         # Create the clip element
         asset_clip = etree.SubElement(spine, 'asset-clip')
-        asset_clip.set('ref', f"r{video_id}")
-        asset_clip.set('duration', f"{num_frames}/{fps}s")
-        asset_clip.set('tcFormat', 'NDF')
-        asset_clip.set('enabled', '1')
-        asset_clip.set('offset', '0/1s' if index == 0 else f"{self.cumulative_duration[0]}/{self.cumulative_duration[1]}s")
-        asset_clip.set('start', '0/1s')
-        asset_clip.set('name', filename)
-        asset_clip.set('format', 'r0')
+        asset_clip_attributes = {
+            'ref': f"r{video_id}",
+            'duration': f"{num_frames}/{fps}s",
+            'tcFormat': 'NDF',
+            'enabled': '1',
+            'offset':  '0/1s' if index == 0 else f"{self.cumulative_duration[0]}/{self.cumulative_duration[1]}s",
+            'start': '0/1s',
+            'format': 'r0',
+            'name': filename,
+        }
+        self.timeline.video_assets_refs.append(asset_clip_attributes['ref'])
+        self.timeline.video_assets[asset_clip_attributes['ref']] = [asset_clip]
+        asset_clip.attrib.update(asset_clip_attributes)
         self.cumulative_duration = (self.cumulative_duration[0] + num_frames, fps)
 
         # Create Adjust Transform element
         adjust_transform = etree.SubElement(asset_clip, 'adjust-transform')
-        adjust_transform.set('position', '0 0')
-        adjust_transform.set('anchor', '0 0')
-        adjust_transform.set('scale', '1 1')
+        adjust_transform.attrib.update({
+            'position': '0 0',
+            'anchor': '0 0',
+            'scale': '1 1',
+        })
 
 
     def add_timeline(self):
@@ -185,7 +199,7 @@ class Concatenate:
         Add the timeline elements to the FCPXML object.
         """
         # Create the library element
-        library = etree.SubElement(self.fcpxml, 'library')
+        library = etree.SubElement(self.timeline.fcpxml, 'library')
 
         # Create the event element
         event = etree.SubElement(library, 'event')
@@ -197,13 +211,16 @@ class Concatenate:
 
         # Create the sequence element
         sequence = etree.SubElement(project, 'sequence')
-        sequence.set('duration', f"{self.total_frames}/{self.fps}s") # This 60000 is hardcoded for now
-        sequence.set('tcFormat', 'NDF')
-        sequence.set('tcStart', '0/1s')
-        sequence.set('format', 'r0')
+        sequence.attrib.update({
+            'duration': f"{self.total_frames}/{self.fps}s",
+            'tcFormat': 'NDF',
+            'tcStart': '0/1s',
+            'format': 'r0'
+        })
 
         # Create the spine element
         spine = etree.SubElement(sequence, 'spine')
+        self.timeline.spine = spine
 
         # Create the asset-clips elements
         for index in range(len(self.videos_data)):

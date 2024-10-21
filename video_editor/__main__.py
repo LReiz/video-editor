@@ -4,8 +4,8 @@ This script create the FCPXML file and adds default configuration to it.
 from lxml import etree
 import argparse
 
-from concatenate import Concatenate
-from preprocess_videos import PreprocessVideos
+from features.concatenate import Concatenate
+from features.preprocess_videos import PreprocessVideos
 
 def create_fcpxml():
     """
