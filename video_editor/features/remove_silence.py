@@ -1,5 +1,5 @@
 """
-This module is used to remove all silence parts from video timeline.
+This class is used to remove all silence parts from video timeline.
 """
 import subprocess
 import os

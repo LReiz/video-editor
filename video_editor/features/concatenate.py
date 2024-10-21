@@ -1,5 +1,5 @@
 """
-This script get all the video files in the input folder and concatenate them into the Timeline.
+This class get all the video files in the input folder and concatenate them into the Timeline.
 """
 import os
 from moviepy.editor import VideoFileClip

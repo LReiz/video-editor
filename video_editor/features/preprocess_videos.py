@@ -1,5 +1,5 @@
 """
-This script preprocess the videos to standardize the video files to be used in the Timeline.
+This class preprocess the videos to standardize the video files to be used in the Timeline.
 """
 import ffmpeg
 import os
