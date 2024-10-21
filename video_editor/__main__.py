@@ -1,12 +1,13 @@
 """
 This script create the FCPXML file and adds default configuration to it.
 """
-from lxml import etree
 import argparse
 
 from features.concatenate import Concatenate
+from features.generate_subtitles import GenerateSubtitles
 from features.preprocess_videos import PreprocessVideos
 from features.remove_silence import RemoveSilence
+
 from entities.timeline import Timeline
 
 
@@ -38,6 +39,8 @@ def main():
 
     # Add subtitles
     remove_silence.generate_final_preview_video()
+    generate_subtitles = GenerateSubtitles(preprocess.preprocessed_folder, remove_silence.preview_final_video)
+    generate_subtitles.generate_subtitles()
 
     # Create the FCPXML file
     timeline.generate_fcpxml_file()
