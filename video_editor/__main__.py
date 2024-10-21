@@ -6,6 +6,7 @@ import argparse
 
 from features.concatenate import Concatenate
 from features.preprocess_videos import PreprocessVideos
+from entities.timeline import Timeline
 
 def create_fcpxml():
     """
@@ -29,7 +30,7 @@ def create_fcpxml_tree(fcpxml):
     return etree.ElementTree(fcpxml)
 
 
-if __name__ == '__main__':
+def main():
     print("Creating FCPXML file...")
     # Get arguments
     parser = argparse.ArgumentParser(description='Create FCPXML file.')
@@ -42,13 +43,16 @@ if __name__ == '__main__':
     # Create the FCPXML Element object
     fcpxml = create_fcpxml()
 
+    # Create the Timeline object
+    timeline = Timeline(fcpxml)
+
     # Preprocess videos
     preprocess = PreprocessVideos(args.videos_folder)
     if not args.skip_preprocess:
         preprocess.preprocess_all_videos_in_folder()
 
     # Concatenate files
-    concatenate = Concatenate(fcpxml, preprocess.preprocessed_folder)
+    concatenate = Concatenate(timeline, preprocess.preprocessed_folder)
     concatenate.concatenate_video_files()
 
     # Remove silent parts
@@ -71,3 +75,7 @@ if __name__ == '__main__':
         tree.write(file, encoding='UTF-8', pretty_print=True)
 
     print("FCPXML file created successfully.")
+
+
+if __name__ == "__main__":
+    main()
