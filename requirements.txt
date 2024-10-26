@@ -3,3 +3,4 @@ moviepy>=1.0.3
 ffmpeg-python>=0.2.0
 auto-editor==25.3.1
 stable-ts>=2.17.5
+srt>=3.5.3
