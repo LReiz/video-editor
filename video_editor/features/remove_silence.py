@@ -9,7 +9,7 @@ import ffmpeg
 
 
 class RemoveSilence:
-    def __init__(self, timeline, videos_folder, margin=0.1):
+    def __init__(self, timeline, videos_folder, margin=0.2):
         self.timeline = timeline
 
         # Loud maps settings
@@ -163,6 +163,10 @@ class RemoveSilence:
         """
         This method join all preview videos in a single video.
         """
+        # Delete final preview file if it already exists
+        if os.path.exists(self.preview_final_video):
+            os.remove(self.preview_final_video)
+
         # Get all preview videos
         preview_videos = [
             os.path.join(self.loud_maps_folder, f) for f in sorted(os.listdir(self.loud_maps_folder))
