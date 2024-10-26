@@ -3,6 +3,8 @@ This class is responsible for generating subtitles for the final video.
 """
 import stable_whisper
 import os
+import re
+import srt
 
 
 class GenerateSubtitles():
@@ -21,7 +23,26 @@ class GenerateSubtitles():
         self.preview_video = preview_video
         self.word_level = word_level
         self.min_dur = min_dur
+        self.transcribe_result = None
 
+    def remove_punctuation(self):
+        """
+        Remove punctuation from the text. Ugly punctuation to remove: . , : ; !
+        """
+        # Read the original SRT content
+        with open(self.subtitles_file, 'r', encoding='utf-8') as f:
+            srt_content = f.read()
+
+        # Parse the SRT content into subtitle objects
+        subtitles = list(srt.parse(srt_content))
+
+        # Remove punctuation from each subtitle's text
+        for subtitle in subtitles:
+            subtitle.content = re.sub(r"[.,:;!]", "", subtitle.content)
+
+        # Write the cleaned subtitles back to a new SRT file
+        with open(self.subtitles_file, 'w', encoding='utf-8') as f:
+            f.write(srt.compose(subtitles))
 
     def generate_subtitles(self):
         """
@@ -31,11 +52,17 @@ class GenerateSubtitles():
         os.makedirs(self.output_folder, exist_ok=True)
 
         # Generate subtitles
-        result = self.model.transcribe(self.preview_video)
-        result.to_srt_vtt(
+        self.transcribe_result = self.model.transcribe(self.preview_video)  
+
+        # Save subtitles
+        self.transcribe_result.to_srt_vtt(
             self.subtitles_file,
             word_level=self.word_level,
             segment_level=not self.word_level,
             min_dur=self.min_dur    
         )
+
+        # Remove punctuation from srt file
+        self.remove_punctuation()
+
         print("Subtitles generated successfully!")
