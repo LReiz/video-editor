@@ -26,6 +26,9 @@ def main():
     # Remove silent parts
     orchestrator.remove_silence()
 
+    # Apply J-Cut to the timeline
+    orchestrator.jcut_timeline()
+
     # Add subtitles
     orchestrator.determine_subtitles_video()
     orchestrator.add_subtitles()
