@@ -158,7 +158,7 @@ class Concatenate:
         # Create the asset element
         self.create_asset_element(resources, index)
 
-    def add_clip_to_timeline(self, spine, index):
+    def add_clip_to_timeline(self, index):
         """
         Add the clip to the timeline.
         """
@@ -167,64 +167,25 @@ class Concatenate:
         num_frames = self.get_video_data(index, 'num_frames')
         filename = self.get_video_data(index, 'filename')
         fps = int(self.get_video_data(index, 'fps'))
+        video_ref = f"r{video_id}"
 
         # Create the clip element
-        asset_clip = etree.SubElement(spine, 'asset-clip')
-        asset_clip_attributes = {
-            'ref': f"r{video_id}",
-            'duration': f"{num_frames}/{fps}s",
-            'tcFormat': 'NDF',
-            'enabled': '1',
-            'offset':  '0/1s' if index == 0 else f"{self.cumulative_duration[0]}/{self.cumulative_duration[1]}s",
-            'start': '0/1s',
-            'format': 'r0',
-            'name': filename,
-        }
-        self.timeline.video_assets_refs.append(asset_clip_attributes['ref'])
-        self.timeline.video_assets[asset_clip_attributes['ref']] = [asset_clip]
-        asset_clip.attrib.update(asset_clip_attributes)
-        self.cumulative_duration = (self.cumulative_duration[0] + num_frames, fps)
+        self.timeline.add_clip_to_timeline(video_ref, num_frames, 0, self.cumulative_duration[0], fps, filename)
+        self.timeline.store_video_ref(video_ref)
 
-        # Create Adjust Transform element
-        adjust_transform = etree.SubElement(asset_clip, 'adjust-transform')
-        adjust_transform.attrib.update({
-            'position': '0 0',
-            'anchor': '0 0',
-            'scale': '1 1',
-        })
+        self.cumulative_duration = (self.cumulative_duration[0] + num_frames, fps)
 
 
     def add_timeline(self):
         """
         Add the timeline elements to the FCPXML object.
         """
-        # Create the library element
-        library = etree.SubElement(self.timeline.fcpxml, 'library')
-
-        # Create the event element
-        event = etree.SubElement(library, 'event')
-        event.set('name', 'Timeline 1')
-
-        # Create the project element
-        project = etree.SubElement(event, 'project')
-        project.set('name', 'Timeline 1')
-
-        # Create the sequence element
-        sequence = etree.SubElement(project, 'sequence')
-        sequence.attrib.update({
-            'duration': f"{self.total_frames}/{self.fps}s",
-            'tcFormat': 'NDF',
-            'tcStart': '0/1s',
-            'format': 'r0'
-        })
-
-        # Create the spine element
-        spine = etree.SubElement(sequence, 'spine')
-        self.timeline.spine = spine
+        # Create timeline structure
+        self.timeline.create_timeline_structure()
 
         # Create the asset-clips elements
         for index in range(len(self.videos_data)):
-            self.add_clip_to_timeline(spine, index)
+            self.add_clip_to_timeline(index)
 
 
     def concatenate_video_files(self):

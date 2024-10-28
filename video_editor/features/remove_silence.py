@@ -4,7 +4,6 @@ This class is used to remove all silence parts from video timeline.
 import subprocess
 import os
 import json
-from copy import deepcopy
 import ffmpeg
 
 
@@ -104,12 +103,18 @@ class RemoveSilence:
     def remove_silence(self):
         """
         This method remove all silence parts from video timeline.
+
+        This method applies a FIFO logic:
+            - It iterates over all clips in the timeline and create a Loud Map for each. The Loud Map shows
+              which parts of the clip has sound. Based on the Loud Map, many clips are created and added to
+              the end of the timeline. Finally, the original clip is removed from the timeline.
         """
         for ref in self.timeline.video_assets_refs:
             # Get loud map for the video
-            base_asset_clip = self.timeline.video_assets[ref][0]
-            filename = base_asset_clip.attrib['name'].split('.')[0]
-            loud_map_json = self.get_loud_map(filename)
+            base_asset_clip = self.timeline.get_stored_video_asset(ref, 0)
+            filename_without_extension = base_asset_clip.attrib['name'].split('.')[0]
+
+            loud_map_json = self.get_loud_map(filename_without_extension)
             loud_map = loud_map_json['v'][0]
             timebase = loud_map_json['timebase'].split('/')[0]
 
@@ -118,18 +123,24 @@ class RemoveSilence:
             # Split asset clip in loud parts
             for loud_part in loud_map:
                 # Create new asset clip
-                asset_clip = deepcopy(base_asset_clip)
-                asset_clip.attrib.update({
-                    # **Note:** auto-editor returns start and offset element switched
-                    'start': f"{loud_part['offset']}/{timebase}s",
-                    'offset': f"{previous_video_duration + loud_part['start']}/{timebase}s",
-                    'duration': f"{loud_part['dur']}/{timebase}s",
-                })
-                self.timeline.spine.append(asset_clip)
+                # NOTE: auto-editor returns start and offset element switched
+                self.timeline.add_clip_to_timeline(
+                    video_ref=base_asset_clip.get('ref'),
+                    num_frames=loud_part['dur'],
+                    start=loud_part['offset'],
+                    offset=previous_video_duration + loud_part['start'],
+                    fps=timebase,
+                    filename=base_asset_clip.get('name')
+                )
+
                 self.cumulative_duration += loud_part['dur']
             
-            self.timeline.spine.remove(base_asset_clip)
-    
+            # Remove the base asset clip
+            self.timeline.remove_stored_video_asset(ref, 0)
+        
+        # Update sequence duration
+        self.timeline.update_sequence_duration()
+
     def remove_silence_from_videos(self):
         """
         This method remove all silence parts from video timeline based on a generated loud map.
@@ -189,6 +200,7 @@ class RemoveSilence:
         """
         This method generate the final preview video. This can be used to generate subtitles.
         """
+        print("Generating final preview video...")
         self.generate_previews_for_videos()
         self.join_all_preview_videos()
         print("Final preview video generated successfully!")
