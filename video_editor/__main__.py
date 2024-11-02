@@ -16,7 +16,7 @@ def main():
 
     # Determine input folder
     orchestrator.determine_input_folder()
-    
+
     # Create the Timeline object
     orchestrator.create_timeline()
 
@@ -25,6 +25,12 @@ def main():
 
     # Remove silent parts
     orchestrator.remove_silence()
+
+    # Generate preview video after removing silent parts
+    orchestrator.generate_preview_video()
+
+    # Remove Wordless clips
+    orchestrator.remove_wordless_clips()
 
     # Apply J-Cut to the timeline
     orchestrator.jcut_timeline()

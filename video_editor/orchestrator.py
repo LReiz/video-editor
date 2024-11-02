@@ -9,6 +9,7 @@ from features.generate_subtitles import GenerateSubtitles
 from features.j_cut import JCut
 from features.preprocess_videos import PreprocessVideos
 from features.remove_silence import RemoveSilence
+from features.remove_wordless import RemoveWordless
 
 from entities.timeline import Timeline
 
@@ -25,6 +26,7 @@ class Orchestrator:
         self.remove_silence_feat: RemoveSilence = None
         self.generate_subtitles_feat: GenerateSubtitles = None
         self.jcut_feat: JCut = None
+        self.remove_wordless_feat: RemoveWordless = None
 
         # Entities
         self.timeline = None
@@ -41,6 +43,7 @@ class Orchestrator:
         parser.add_argument('--just-subtitles', '-js', action='store_true', help='Just add subtitles to video.')
         parser.add_argument('--skip-subtitles', '-ss', action='store_true', help='Skip the subtitles step.')
         parser.add_argument('--skip-jcut', '-sj', action='store_true', help='Skip the J-Cut step.')
+        parser.add_argument('--remove-silence', '-rs', action='store_true', help='Remove only silent clips from video instead of all wordless clips.')
 
         # Parse the arguments
         self.args = parser.parse_args()
@@ -92,18 +95,18 @@ class Orchestrator:
         """
         if self.args.just_subtitles: return
 
-        self.remove_silence_feat = RemoveSilence(self.timeline, self.input_folder)
-        self.remove_silence_feat.remove_silence_from_videos()
+        if self.args.remove_silence:
+            self.remove_silence_feat = RemoveSilence(self.timeline, self.input_folder)
+            self.remove_silence_feat.remove_silence_from_videos()
     
-    def jcut_timeline(self):
+    def generate_preview_video(self):
         """
-        Apply J-Cut to the timeline.
+        Generate the final preview video.
         """
-        if self.args.skip_jcut: return
         if self.args.just_subtitles: return
 
-        self.jcut_feat = JCut(self.timeline)
-        self.jcut_feat.jcut_timeline()
+        if self.args.remove_silence:
+            self.remove_silence_feat.generate_final_preview_video()
     
     def determine_subtitles_video(self):
         """
@@ -113,7 +116,8 @@ class Orchestrator:
             self.subtitles_video = self.input_video
             return
 
-        self.subtitles_video = self.remove_silence_feat.preview_final_video
+        if self.args.remove_silence:
+            self.subtitles_video = self.remove_silence_feat.preview_final_video
     
     def add_subtitles(self):
         """
@@ -121,17 +125,34 @@ class Orchestrator:
         """
         """
         NOTE:
-            - Subtitles to a jcutted video is not implemented yet. To add subtitles to a jcutted video, you need to
-              generate the final final video in the video editor and then run the program with the --just-subtitles flag.
+            - I strongly recommend to add subtitles AFTER THE VIDEO IS READY. It's giving me too much trouble in maintaining
+              this feature. To add subtitles to the final video, you need to generate the final final video in the video editor
+              and then run the program with the --just-subtitles flag passing the video path as parameter.
         """
         if not self.args.skip_jcut: return
         if self.args.skip_subtitles: return
 
-        if not self.args.just_subtitles:
-            self.remove_silence_feat.generate_final_preview_video()
-
         self.generate_subtitles_feat = GenerateSubtitles(self.input_folder, self.subtitles_video)
         self.generate_subtitles_feat.generate_subtitles()
+
+    def remove_wordless_clips(self):
+        """
+        Remove wordless clips.
+        """
+        if self.args.just_subtitles: return
+
+        self.remove_wordless_feat = RemoveWordless(self.timeline, self.input_folder)
+        self.remove_wordless_feat.remove_wordless_clips()
+
+    def jcut_timeline(self):
+        """
+        Apply J-Cut to the timeline.
+        """
+        if self.args.skip_jcut: return
+        if self.args.just_subtitles: return
+
+        self.jcut_feat = JCut(self.timeline)
+        self.jcut_feat.jcut_timeline()
     
     def generate_fcpxml_file(self):
         """
