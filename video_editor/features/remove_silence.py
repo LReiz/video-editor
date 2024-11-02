@@ -119,7 +119,7 @@ class RemoveSilence:
             timebase = loud_map_json['timebase'].split('/')[0]
 
             previous_video_duration = self.cumulative_duration
-            
+
             # Split asset clip in loud parts
             for loud_part in loud_map:
                 # Create new asset clip

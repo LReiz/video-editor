@@ -9,6 +9,7 @@ Note:
 """
 from copy import deepcopy
 
+
 class JCut:
     def __init__(self, timeline):
         self.last_frame_lane_0 = 0

@@ -52,7 +52,7 @@ class GenerateSubtitles():
         os.makedirs(self.output_folder, exist_ok=True)
 
         # Generate subtitles
-        self.transcribe_result = self.model.transcribe(self.preview_video)  
+        self.transcribe_result = self.model.transcribe(self.preview_video)
 
         # Save subtitles
         self.transcribe_result.to_srt_vtt(
