@@ -52,12 +52,12 @@ class Orchestrator:
         if self.args.just_subtitles: return
         if self.args.skip_preprocess: return 
 
-        if self.args.already_preprocessed:
-            self.preprocess_feat = PreprocessVideos(self.args.input)
-            return
+        self.preprocess_feat = PreprocessVideos(self.args.input)
+
+        if self.args.already_preprocessed: return
 
         self.preprocess_feat.preprocess_all_videos_in_folder()
-    
+
     def determine_input_folder(self):
         """
         Determine the input folder.
@@ -67,7 +67,14 @@ class Orchestrator:
             self.input_video = self.args.input
             return
 
-        self.input_folder = self.preprocess_feat.preprocessed_folder if self.args.already_preprocessed else self.args.input
+        # if skip preprocessing, get the normal input folder
+        if self.args.skip_preprocess:
+            self.input_folder = self.args.input
+            return
+
+        # if already preprocessed, get the preprocessed folder
+        self.input_folder = self.preprocess_feat.preprocessed_folder
+        
 
     def create_timeline(self):
         """
@@ -104,7 +111,7 @@ class Orchestrator:
 
         self.jcut_feat = JCut(self.timeline)
         self.jcut_feat.jcut_timeline()
-    
+
     def determine_subtitles_video(self):
         """
         Determine the video to add subtitles.
@@ -124,12 +131,13 @@ class Orchestrator:
             - Subtitles to a jcutted video is not implemented yet. To add subtitles to a jcutted video, you need to
               generate the final final video in the video editor and then run the program with the --just-subtitles flag.
         """
-        if not self.args.skip_jcut: return
+        if not self.args.skip_jcut and not self.args.just_subtitles: return
         if self.args.skip_subtitles: return
 
         if not self.args.just_subtitles:
             self.remove_silence_feat.generate_final_preview_video()
 
+        print("Adding subtitles...")
         self.generate_subtitles_feat = GenerateSubtitles(self.input_folder, self.subtitles_video)
         self.generate_subtitles_feat.generate_subtitles()
     
