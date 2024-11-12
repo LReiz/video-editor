@@ -1,4 +1,5 @@
 CURRENT_PYTHON_VERSION := $(shell python --version 2>&1)
+PROJECT_DIR=$(shell pwd)
 REQUIRED_PYTHON_VERSION := 3.12
 
 python-version:
@@ -11,3 +12,6 @@ python-version:
 install: python-version
 	@echo "Installing dependencies..."
 	pip install -r requirements.txt
+	@echo "Adding project directory to PYTHONPATH..."
+	@export PYTHONPATH="${PROJECT_DIR}:${PYTHONPATH}"
+	@echo "PYTHONPATH set to ${PROJECT_DIR}"
