@@ -6,6 +6,8 @@ import os
 import json
 import ffmpeg
 
+from utils.files import get_video_files
+
 
 class RemoveSilence:
     def __init__(self, timeline, videos_folder, margin=0.2):
@@ -76,9 +78,7 @@ class RemoveSilence:
         """
         This method remove all silence parts from video timeline.
         """
-        video_files = [
-            os.path.join(os.path.abspath(self.videos_folder), f) for f in sorted(os.listdir(self.videos_folder))
-        ]
+        video_files = get_video_files(self.videos_folder)
 
         os.makedirs(self.loud_maps_folder, exist_ok=True)
 
@@ -100,7 +100,7 @@ class RemoveSilence:
             return json.load(file)
 
 
-    def remove_silence(self):
+    def cut_clips(self):
         """
         This method remove all silence parts from video timeline.
 
@@ -113,27 +113,75 @@ class RemoveSilence:
             # Get loud map for the video
             base_asset_clip = self.timeline.get_stored_video_asset(ref, 0)
             filename_without_extension = base_asset_clip.attrib['name'].split('.')[0]
+            base_clip_attrib = self.timeline.get_clip_attributes(base_asset_clip)
+            base_clip_duration = base_clip_attrib['num_frames']
 
             loud_map_json = self.get_loud_map(filename_without_extension)
             loud_map = loud_map_json['v'][0]
             timebase = loud_map_json['timebase'].split('/')[0]
 
             previous_video_duration = self.cumulative_duration
+            previous_loud_clip_offset = 0
+            previous_loud_clip_start = 0
+            previous_loud_clip_duration = 0
             
             # Split asset clip in loud parts
             for loud_part in loud_map:
                 # Create new asset clip
-                # NOTE: auto-editor returns start and offset element switched
+                # NOTE: auto-editor returns start and offset element switched (I hate this so fucking much...)
+                loud_clip_start = loud_part['offset']
+
+                silent_clip_start = previous_loud_clip_start + previous_loud_clip_duration
+                silent_clip_duration = loud_clip_start - silent_clip_start
+                silent_clip_offset = previous_loud_clip_offset + previous_loud_clip_duration
+
+                # Add the silent part
+                if silent_clip_duration > 0:
+                    self.timeline.add_clip_to_timeline(
+                        video_ref=base_asset_clip.get('ref'),
+                        num_frames=silent_clip_duration,
+                        start=silent_clip_offset,
+                        offset=previous_video_duration + silent_clip_start,
+                        fps=timebase,
+                        filename=base_asset_clip.get('name'),
+                        custom_attrib={'ave_silent': 'true'}
+                    )
+                
+                loud_clip_offset = silent_clip_offset + silent_clip_duration
+
+                # Add the loud part
                 self.timeline.add_clip_to_timeline(
                     video_ref=base_asset_clip.get('ref'),
                     num_frames=loud_part['dur'],
-                    start=loud_part['offset'],
-                    offset=previous_video_duration + loud_part['start'],
+                    start=loud_clip_start,
+                    offset=previous_video_duration + loud_clip_offset,
                     fps=timebase,
                     filename=base_asset_clip.get('name')
                 )
 
-                self.cumulative_duration += loud_part['dur']
+                previous_loud_clip_start = loud_clip_start
+                previous_loud_clip_offset = loud_clip_offset
+                previous_loud_clip_duration = loud_part['dur']
+            
+            # Add the last silent part
+            if previous_loud_clip_start + previous_loud_clip_duration < base_clip_duration:
+                silent_clip_start = previous_loud_clip_start + previous_loud_clip_duration
+                silent_clip_duration = base_clip_duration - silent_clip_start
+                silent_clip_offset = previous_loud_clip_offset + previous_loud_clip_duration
+
+                # Add the last silent part
+                self.timeline.add_clip_to_timeline(
+                    video_ref=base_asset_clip.get('ref'),
+                    num_frames=silent_clip_duration,
+                    start=silent_clip_offset,
+                    offset=previous_video_duration + silent_clip_start,
+                    fps=timebase,
+                    filename=base_asset_clip.get('name'),
+                    custom_attrib={'ave_silent': 'true'}
+                )
+
+            # Update base clip duration
+            self.cumulative_duration += base_clip_duration
             
             # Remove the base asset clip
             self.timeline.remove_stored_video_asset(ref, 0)
@@ -141,24 +189,18 @@ class RemoveSilence:
         # Update sequence duration
         self.timeline.update_sequence_duration()
 
-    def remove_silence_from_videos(self):
+    def remove_silence(self):
         """
-        This method remove all silence parts from video timeline based on a generated loud map.
+        TODO: This method remove all silence parts from video timeline.
         """
-        # Generate loud maps for all videos
-        self.generate_loud_map_for_each_video_in_folder()
-
-        # Remove silence from videos
-        self.remove_silence()
+        pass
 
 
     def generate_previews_for_videos(self):
         """
         This method generate preview videos for all videos in the folder.
         """
-        video_files = [
-            os.path.join(os.path.abspath(self.videos_folder), f) for f in sorted(os.listdir(self.videos_folder))
-        ]
+        video_files = get_video_files(self.videos_folder)
 
         os.makedirs(self.loud_maps_folder, exist_ok=True)
 
