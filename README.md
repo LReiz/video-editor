@@ -9,14 +9,17 @@ This program will primarily focus on the creation of `.fcpxml` (Final Cut Pro XM
 For Windows users, it's **recommended** the installation of the following:
 1. [Chocolatey](https://chocolatey.org/install#individual) (recommended to install other packages)
 
+For MacOS users, it's **recommended** the installation of the following:
+1. [Homebrew](https://brew.sh/)
+
 It's necessary that you install:
 1. [Python 3.12](https://www.python.org/downloads/release/python-3120/)
 1. [Windows Pyenv](https://github.com/pyenv-win/pyenv-win?tab=readme-ov-file#quick-start)
     - I had to execute this line in Windows Powershell before installing pyenv-win `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
 1. git
-1. make (can be installed with `choco install make`)
-1. grep (can be installed with `choco install grep`)
-1. ffmpeg (can be installed with `choco install ffmpeg`)
+1. make (can be installed on Windows with `choco install make`)
+1. grep (can be installed on Windows with `choco install grep`)
+1. ffmpeg (can be installed on Windows with `choco install ffmpeg` or on MacOS with `brew install ffmpeg`)
 
 
 Clone the repository:
