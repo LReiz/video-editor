@@ -6,6 +6,8 @@ from moviepy.editor import VideoFileClip
 from lxml import etree
 import ffmpeg
 
+from utils.files import get_video_files
+
 
 class Concatenate:
     def __init__(self, timeline, videos_folder):
@@ -132,11 +134,7 @@ class Concatenate:
         """
         Add resource to the FCPXML object.
         """
-        # Ignore if video_path is not a file
-        if not os.path.isfile(video_path):
-            print(f"Not a file. Ignoring: {video_path}")
-            return
-        
+        # Store video data
         self.store_video_data(video_path, index+1)
 
         # Create the resources element if it doesn't exist
@@ -194,15 +192,13 @@ class Concatenate:
         """
         print("Concatenating files...")
         # Get all the video files in alphabetical order from the input folder
-        video_files = [
-            os.path.join(os.path.abspath(self.videos_folder), f) for f in sorted(os.listdir(self.videos_folder))
-        ]
+        video_files = get_video_files(self.videos_folder)
 
         # Concatenate the video files
         for index, video_file in enumerate(video_files):
             self.add_resource(video_file, index)
             print(f"Resource created for file: {video_file}")
-        
+
         # Add the timeline elements
         self.add_timeline()
 
