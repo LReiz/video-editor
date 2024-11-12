@@ -26,6 +26,9 @@ def main():
     # Remove silent parts
     orchestrator.remove_silence()
 
+    # Remove Wordless clips
+    orchestrator.remove_wordless_clips()
+
     # Apply J-Cut to the timeline
     orchestrator.jcut_timeline()
 

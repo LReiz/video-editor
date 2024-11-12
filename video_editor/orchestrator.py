@@ -9,6 +9,7 @@ from features.generate_subtitles import GenerateSubtitles
 from features.j_cut import JCut
 from features.preprocess_videos import PreprocessVideos
 from features.remove_silence import RemoveSilence
+from features.remove_wordless import RemoveWordless
 
 from entities.timeline import Timeline
 
@@ -25,6 +26,7 @@ class Orchestrator:
         self.remove_silence_feat: RemoveSilence = None
         self.generate_subtitles_feat: GenerateSubtitles = None
         self.jcut_feat: JCut = None
+        self.remove_wordless_feat: RemoveWordless = None
 
         # Entities
         self.timeline = None
@@ -41,6 +43,7 @@ class Orchestrator:
         parser.add_argument('--just-subtitles', '-js', action='store_true', help='Just add subtitles to video.')
         parser.add_argument('--skip-subtitles', '-ss', action='store_true', help='Skip the subtitles step.')
         parser.add_argument('--skip-jcut', '-sj', action='store_true', help='Skip the J-Cut step.')
+        parser.add_argument('--just-remove-silence', '-jrs', action='store_true', help='Remove only silent clips from video instead of all wordless clips.')
 
         # Parse the arguments
         self.args = parser.parse_args()
@@ -100,7 +103,11 @@ class Orchestrator:
         if self.args.just_subtitles: return
 
         self.remove_silence_feat = RemoveSilence(self.timeline, self.input_folder)
-        self.remove_silence_feat.remove_silence_from_videos()
+        self.remove_silence_feat.generate_loud_map_for_each_video_in_folder()
+        self.remove_silence_feat.cut_clips()
+        # TODO: Implement the following method
+        # This should remove silent parts from the video when remove wordless clips will be skipped
+        # self.remove_silence_feat.remove_silence()
     
     def jcut_timeline(self):
         """
@@ -121,6 +128,16 @@ class Orchestrator:
             return
 
         self.subtitles_video = self.remove_silence_feat.preview_final_video
+    
+    def remove_wordless_clips(self):
+        """
+        Remove wordless clips.
+        """
+        if self.args.just_remove_silence: return
+
+        print("Removing wordless clips...")
+        self.remove_wordless_feat = RemoveWordless(self.timeline, self.input_folder)
+        self.remove_wordless_feat.remove_wordless_clips()
     
     def add_subtitles(self):
         """
