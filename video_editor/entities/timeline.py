@@ -107,7 +107,7 @@ class Timeline():
         asset_clip = self.video_assets[video_ref].pop(index)
         self.spine.remove(asset_clip)
     
-    def add_clip_to_timeline(self, video_ref, num_frames, start, offset, fps, filename, lane=0) -> etree.Element:
+    def add_clip_to_timeline(self, video_ref, num_frames, start, offset, fps, filename, lane=0, custom_attrib={}) -> etree.Element:
         """
         Add video clip to the timeline.
         """
@@ -123,6 +123,7 @@ class Timeline():
             'format': 'r0',
             'name': filename,
             'lane': f"{lane}",
+            **custom_attrib,
         }
         asset_clip.attrib.update(asset_clip_attributes)
 
@@ -153,15 +154,20 @@ class Timeline():
         """
         Get clip parameters.
         """
+        # Get Davinci tags
         num_frames, fps = clip.get('duration')[0:-1].split('/')
         start_frames = clip.get('start')[0:-1].split('/')[0]
         offset_frames = clip.get('offset')[0:-1].split('/')[0]
+
+        # Get custom tags
+        ave_silent = clip.get('ave_silent', 'false').lower() == 'true'
 
         attributes = {
             'num_frames': int(num_frames),
             'fps': int(fps),
             'start_frames': int(start_frames),
             'offset_frames': int(offset_frames),
+            'ave_silent': ave_silent,
         }
 
         return attributes
