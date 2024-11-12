@@ -16,6 +16,7 @@ It's necessary that you install:
 1. git
 1. make (can be installed with `choco install make`)
 1. grep (can be installed with `choco install grep`)
+1. ffmpeg (can be installed with `choco install ffmpeg`)
 
 
 Clone the repository:
@@ -36,7 +37,16 @@ Create a python virtual environment and activate it:
 
 ```bash
 python -m venv .venv
+```
+
+Activate venv
+
+```bash
+# for Windows
 .venv\Scripts\activate
+
+# for MacOS
+source .venv/bin/activate
 ```
 
 Install requirements:
