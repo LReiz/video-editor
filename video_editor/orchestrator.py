@@ -134,6 +134,7 @@ class Orchestrator:
         Remove wordless clips.
         """
         if self.args.just_remove_silence: return
+        if self.args.just_subtitles: return
 
         print("Removing wordless clips...")
         self.remove_wordless_feat = RemoveWordless(self.timeline, self.input_folder)
