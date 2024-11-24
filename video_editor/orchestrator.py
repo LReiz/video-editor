@@ -149,7 +149,7 @@ class Orchestrator:
             - Subtitles to a jcutted video is not implemented yet. To add subtitles to a jcutted video, you need to
               generate the final final video in the video editor and then run the program with the --just-subtitles flag.
         """
-        if not self.args.skip_jcut and not self.args.just_subtitles: return
+        if not self.args.just_subtitles: return
         if self.args.skip_subtitles: return
 
         if not self.args.just_subtitles:
