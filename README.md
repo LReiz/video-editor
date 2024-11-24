@@ -55,7 +55,11 @@ source .venv/bin/activate
 Install requirements:
 
 ```bash
-make install
+# for Windows
+make install-win
+
+# for MacOS
+make install-mac
 ```
 
 ## How to Use
