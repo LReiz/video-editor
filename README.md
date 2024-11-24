@@ -96,3 +96,5 @@ python video_editor -js <path-to-your-video>
 ```
 
 You should then see a folder called `timeline` with the `subtitles.srt` file in the same folder as your video. Simply open the Davinci Resolve project and import the subtitles file with `File > Import > Subtitle...`. Then, right-click the imported file and `Insert Selected Subtitles to Timeline Using Timecode`.
+
+- **Tip:** If you like, you can find subtitle formatting presets under `presets/davinci/subtitles` folder and import them into Davinci Resolve. Unfortunately, `.srt` files don't support fancy formatting, so they can't be automatically set up.
