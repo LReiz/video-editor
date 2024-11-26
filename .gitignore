@@ -3,6 +3,10 @@
 __pycache__/
 *.fcpxml
 *.srt
+.DS_Store
+
+# Remove unwanted video files
 *.mp4
 *.mov
-.DS_Store
+!assets/subway_surfers/*.mp4
+!assets/subway_surfers/*.mov
