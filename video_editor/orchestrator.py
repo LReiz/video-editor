@@ -23,10 +23,13 @@ class Orchestrator:
 
         # Features
         self.preprocess_feat: PreprocessVideos = None
+        self.concatenate_feat: Concatenate = None
         self.remove_silence_feat: RemoveSilence = None
         self.generate_subtitles_feat: GenerateSubtitles = None
         self.jcut_feat: JCut = None
         self.remove_wordless_feat: RemoveWordless = None
+        self.jcut_feat: JCut = None
+        self.generate_subtitles_feat: GenerateSubtitles = None
 
         # Entities
         self.timeline = None

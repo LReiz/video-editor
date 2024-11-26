@@ -2,37 +2,22 @@
 This class get all the video files in the input folder and concatenate them into the Timeline.
 """
 import os
-from moviepy.editor import VideoFileClip
-from lxml import etree
-import ffmpeg
 
-from utils.files import get_video_files
+from utils.files import get_video_files, get_video_file_specs
+from entities.timeline import Timeline
 
 
 class Concatenate:
-    def __init__(self, timeline, videos_folder):
+    def __init__(self, timeline: Timeline, videos_folder):
         self.timeline = timeline
         self.videos_folder = videos_folder
-        self.total_frames = 0
         self.fps = 0
         
         # This will hold all video data, such as: width, height, fps, ...
         self.videos_data = []
 
         # This variables are cumulative as we add elements to the timeline
-        self.resource_id = 0
         self.cumulative_duration = (0, 0)
-
-
-    def format_file_path(self, file_path):
-        """
-        Format the file path to be used in the FCPXML file.
-        """
-        file_path = os.path.join(self.videos_folder, file_path)
-        file_path = f"file://localhost/{os.path.abspath(file_path)}"
-        file_path = file_path.replace("\\", "/")
-        file_path = file_path.replace(" ", "%20")
-        return file_path
 
 
     def get_video_data(self, index, data_type):
@@ -42,7 +27,7 @@ class Concatenate:
         return self.videos_data[index][data_type]
     
 
-    def create_format_element(self, resources, index):
+    def create_format_element(self, index):
         """
         Create the format element for the video file.
         """
@@ -50,19 +35,13 @@ class Concatenate:
         fps = int(self.get_video_data(index, 'fps'))
         width = self.get_video_data(index, 'width')
         height = self.get_video_data(index, 'height')
+        name = 'DefaultVideoFormat'
 
         # Create the format element
-        format_element = etree.SubElement(resources, 'format')
-        format_element.set('id', f"r{self.resource_id}")
-        format_element.set('frameDuration', f"1/{fps}s")  # Placeholder for frame duration
-        format_element.set('width', str(width))
-        format_element.set('height', str(height))
-        format_element.set('name', 'FFVideoFormatRateUndefined')
-        self.fps = fps
-        self.resource_id += 1
+        self.timeline.add_format_element(fps, width, height, name)
 
 
-    def create_asset_element(self, resources, index):
+    def create_asset_element(self, index):
         """
         Create the asset element for the video file.
         """
@@ -74,58 +53,24 @@ class Concatenate:
         fps = int(self.get_video_data(index, 'fps'))
 
         # Create the asset element
-        asset_element = etree.SubElement(resources, 'asset')
-        """
-        Note:
-            Duration calculations are currently not very precise. It's differing from Davinci `.fcpxml` file
-            for the same videos. We need to find a better way to calculate the duration. Although, it doesn't
-            seem to visually affect the final video.
-        """
-        asset_element.attrib.update({
-            'duration': f"{num_frames}/{fps}s",
-            'hasVideo': '1',
-            'id': f"r{self.resource_id}",
-            'audioSources': '1',  # Placeholder for audio sources
-            'hasAudio': '1' if audio_channels > 0 else '0',
-            'start': '0/1s',  # Placeholder start
-            'name': filename,
-            'audioChannels': str(audio_channels),
-            'format': "r0",
-        })
+        self.timeline.add_asset_element(fps, num_frames, audio_channels, filename, filepath)
 
-        self.total_frames += num_frames
-
-        # Create the media element
-        media = etree.SubElement(asset_element, 'media-rep')
-        media.set('src', filepath)
-        media.set('kind', 'original-media')
-        self.resource_id += 1
-    
 
     def store_video_data(self, video_path, resource_id):
         """
         Store video data for later use.
         """
-        # Get video data from FFMPEG
-        probe = ffmpeg.probe(video_path, v='error', select_streams='v:0', show_entries='stream=nb_frames')
-        num_frames = int(probe['streams'][0]['nb_frames'])
-
-        # Get video data from MoviePy
-        with VideoFileClip(video_path) as video:
-            width, height = video.size
-            audio_channels = video.audio.nchannels if video.audio.nchannels is not None else 0
-            filename = os.path.basename(video_path)
-            filepath = self.format_file_path(str(video_path))
-            fps = video.fps
+        # Get video specs
+        video_specs = get_video_file_specs(video_path)
 
         self.videos_data.append({
-            "width": width,
-            "height": height,
-            "audio_channels": audio_channels,
-            "filename": filename,
-            "filepath": filepath,
-            "fps": fps,
-            "num_frames": num_frames,
+            "width": video_specs['width'],
+            "height": video_specs['height'],
+            "audio_channels": video_specs['audio_channels'],
+            "filename": video_specs['filename'],
+            "filepath": video_specs['localhost_path'],
+            "fps": video_specs['fps'],
+            "num_frames": video_specs['num_frames'],
             "resource_id": resource_id,
         })
 
@@ -137,10 +82,8 @@ class Concatenate:
         # Store video data
         self.store_video_data(video_path, index+1)
 
-        # Create the resources element if it doesn't exist
-        resources = self.timeline.fcpxml.find('resources')
-        if resources is None:
-            resources = etree.SubElement(self.timeline.fcpxml, 'resources')
+        # Get resources element from Timeline
+        resources = self.timeline.resources
 
         # Get format element
         format_element = resources.find('format')
@@ -151,10 +94,10 @@ class Concatenate:
                 For now we'll use the same format for all the videos. But this may need to be changed to handle
                 multiple different formats.
             """
-            self.create_format_element(resources, index)
+            self.create_format_element(index)
 
         # Create the asset element
-        self.create_asset_element(resources, index)
+        self.create_asset_element(index)
 
     def add_clip_to_timeline(self, index):
         """
@@ -169,7 +112,6 @@ class Concatenate:
 
         # Create the clip element
         self.timeline.add_clip_to_timeline(video_ref, num_frames, 0, self.cumulative_duration[0], fps, filename)
-        self.timeline.store_video_ref(video_ref)
 
         self.cumulative_duration = (self.cumulative_duration[0] + num_frames, fps)
 
@@ -184,6 +126,9 @@ class Concatenate:
         # Create the asset-clips elements
         for index in range(len(self.videos_data)):
             self.add_clip_to_timeline(index)
+        
+        # Update sequence duration
+        self.timeline.update_sequence_duration()
 
 
     def concatenate_video_files(self):
