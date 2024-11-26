@@ -281,3 +281,39 @@ class Timeline():
         """
         return self.sequence.attrib['duration'][0:-1].split('/')[0], self.sequence.attrib['duration'][0:-1].split('/')[1]
 
+    def zoom_clip(self, clip: etree.Element, ratio: float):
+        """
+        Zoom clip to the given ratio.
+        """
+        # Get adjust-transform element from the clip
+        adjust_transform = clip.find('adjust-transform')
+
+        # Create if it doesn't exist
+        if adjust_transform is None:
+            adjust_transform = self.add_adjust_transform_element(clip)
+            return
+
+        # Update scale attribute
+        adjust_transform.set('scale', f"{ratio} {ratio}")
+
+    def move_clip(self, clip: etree.Element, x: float=None, y: float=None):
+        """
+        Move clip based on relative x and y values.
+        """
+        # Get adjust-transform element from the clip
+        adjust_transform = clip.find('adjust-transform')
+
+        # Create if it doesn't exist
+        if adjust_transform is None:
+            adjust_transform = self.add_adjust_transform_element(clip)
+            return
+        
+        # Get current position
+        current_position = adjust_transform.get('position').split(' ')
+
+        # Get x and y values
+        x = current_position[0] if x is None else x
+        y = current_position[1] if y is None else y
+
+        # Update position attribute
+        adjust_transform.set('position', f"{x} {y}")
