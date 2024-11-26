@@ -20,6 +20,7 @@ It's necessary that you install:
 1. make (can be installed on Windows with `choco install make`)
 1. grep (can be installed on Windows with `choco install grep`)
 1. ffmpeg (can be installed on Windows with `choco install ffmpeg` or on MacOS with `brew install ffmpeg`)
+1. Git LFS (more instructions in the next section)
 
 
 Clone the repository:
@@ -61,6 +62,14 @@ make install-win
 # for MacOS
 make install-mac
 ```
+
+## Git LFS (Large Files Storage)
+
+To leverage the full power of the Automatic Video Editor, the use of some large files are required. For instance, Subway Surfers feature uses default video files to edit your video. However, vanilla Github don't support files larger than 100MB. Fortunately, Git LFS is a tool to fill in this gap and enable repositories to handle large files. All files tracked by Git LFS are stated in `.gitattributes` file. To install Git LFS follow the steps in the following URL:
+- [Install Git LFS](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage)
+
+If you want to learn more about how to work with Git LFS and contribute to this repository, got to:
+- [Configure Git LFS](https://docs.github.com/en/repositories/working-with-files/managing-large-files/configuring-git-large-file-storage)
 
 ## How to Use
 
