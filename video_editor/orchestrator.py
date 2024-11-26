@@ -10,6 +10,7 @@ from features.j_cut import JCut
 from features.preprocess_videos import PreprocessVideos
 from features.remove_silence import RemoveSilence
 from features.remove_wordless import RemoveWordless
+from features.subway_surfers import SubwaySurfers
 
 from entities.timeline import Timeline
 
@@ -25,10 +26,9 @@ class Orchestrator:
         self.preprocess_feat: PreprocessVideos = None
         self.concatenate_feat: Concatenate = None
         self.remove_silence_feat: RemoveSilence = None
-        self.generate_subtitles_feat: GenerateSubtitles = None
-        self.jcut_feat: JCut = None
         self.remove_wordless_feat: RemoveWordless = None
         self.jcut_feat: JCut = None
+        self.subway_surfers_feat: SubwaySurfers = None
         self.generate_subtitles_feat: GenerateSubtitles = None
 
         # Entities
@@ -142,6 +142,16 @@ class Orchestrator:
         print("Removing wordless clips...")
         self.remove_wordless_feat = RemoveWordless(self.timeline, self.input_folder)
         self.remove_wordless_feat.remove_wordless_clips()
+    
+    def add_subway_surfers(self):
+        """
+        Add Subway Surfers to the video.
+        """
+        if self.args.just_subtitles: return
+
+        print("Adding Subway Surfers...")
+        self.subway_surfers_feat = SubwaySurfers(self.timeline)
+        self.subway_surfers_feat.add_subway_surfers()
     
     def add_subtitles(self):
         """

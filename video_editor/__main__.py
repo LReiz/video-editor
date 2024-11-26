@@ -32,6 +32,9 @@ def main():
     # Apply J-Cut to the timeline
     orchestrator.jcut_timeline()
 
+    # Add Subway Surfers to the video
+    orchestrator.add_subway_surfers()
+
     # Add subtitles
     orchestrator.determine_subtitles_video()
     orchestrator.add_subtitles()
