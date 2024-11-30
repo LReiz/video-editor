@@ -47,6 +47,7 @@ class Orchestrator:
         parser.add_argument('--skip-subtitles', '-ss', action='store_true', help='Skip the subtitles step.')
         parser.add_argument('--skip-jcut', '-sj', action='store_true', help='Skip the J-Cut step.')
         parser.add_argument('--just-remove-silence', '-jrs', action='store_true', help='Remove only silent clips from video instead of all wordless clips.')
+        parser.add_argument('--words-by-subtitle', '-wbs', type=int, default=1, help='Number of words by subtitle group.')
 
         # Parse the arguments
         self.args = parser.parse_args()
@@ -169,7 +170,7 @@ class Orchestrator:
             self.remove_silence_feat.generate_final_preview_video()
 
         print("Adding subtitles...")
-        self.generate_subtitles_feat = GenerateSubtitles(self.input_folder, self.subtitles_video)
+        self.generate_subtitles_feat = GenerateSubtitles(self.input_folder, self.subtitles_video, words_by_group=self.args.words_by_subtitle)
         self.generate_subtitles_feat.generate_subtitles()
     
     def generate_fcpxml_file(self):
